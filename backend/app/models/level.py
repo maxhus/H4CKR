@@ -8,6 +8,8 @@ class Level(Base):
     chapter = Column(Integer)
     position = Column(Integer)
     type = Column(String)
+    title = Column(String)
+    description = Column(String)
     artifact_url = Column(String)
     solution_hash = Column(String)
     points = Column(Integer)

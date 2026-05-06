@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from datetime import datetime
 from app.db.base import Base
 
 class Attempt(Base):
@@ -9,3 +10,4 @@ class Attempt(Base):
     level_id = Column(Integer, ForeignKey("levels.id"))
     answer_hash = Column(String)
     validated = Column(Boolean)
+    timestamp = Column(DateTime, default=datetime.utcnow)

@@ -6,5 +6,6 @@ class Hint(Base):
 
     id = Column(Integer, primary_key=True)
     level_id = Column(Integer)
+    position = Column(Integer)
     content = Column(String)
     malus = Column(Integer)
