@@ -320,6 +320,8 @@ Le projet adopte une direction artistique :
 Projet réalisé par :
 
 - Malchus
+- Hamza
+-Lamis
 
 Assistants IA utilisés :
 
