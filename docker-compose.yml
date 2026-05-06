@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: h4ckr_postgres
+    environment:
+      POSTGRES_USER: h4ckr
+      POSTGRES_PASSWORD: h4ckr_secure_password
+      POSTGRES_DB: h4ckr_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U h4ckr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
