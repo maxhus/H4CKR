@@ -18,7 +18,8 @@ export default function Login() {
     try {
       const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
       const res = await api.post(endpoint, { username, password });
-      setAuth(res.data.access_token, res.data.user_id, username);
+      const payload = JSON.parse(atob(res.data.access_token.split('.')[1]));
+      setAuth(res.data.access_token, res.data.user_id, username, payload.role);
       navigate("/game");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Erreur de connexion");

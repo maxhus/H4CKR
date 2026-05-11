@@ -1,31 +1,34 @@
 import { create } from "zustand";
-
-
-interface AuthState {
+ 
+export interface AuthState {
   token: string | null;
   userId: number | null;
   username: string | null;
-  setAuth: (token: string, userId: number, username: string) => void;
+  role: string | null;
+  setAuth: (token: string, userId: number, username: string, role: string) => void;
   logout: () => void;
 }
-
+ 
 export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem("token"),
   userId: localStorage.getItem("userId") ? Number(localStorage.getItem("userId")) : null,
   username: localStorage.getItem("username"),
-
-  setAuth: (token, userId, username) => {
+  role: localStorage.getItem("role"),
+ 
+  setAuth: (token, userId, username, role) => {
     localStorage.setItem("token", token);
     localStorage.setItem("userId", String(userId));
     localStorage.setItem("username", username);
-    set({ token, userId, username });
+    localStorage.setItem("role", role);
+    set({ token, userId, username, role });
   },
-
+ 
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
-    set({ token: null, userId: null, username: null });
+    localStorage.removeItem("role");
+    set({ token: null, userId: null, username: null, role: null });
   },
-  
 }));
+ 
