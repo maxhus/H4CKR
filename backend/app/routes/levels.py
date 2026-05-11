@@ -43,7 +43,6 @@ def list_levels(db: Session = Depends(get_db)) -> list[LevelOut]:
 def get_level(level_id: int, db: Session = Depends(get_db)) -> LevelOut:
     return get_level_or_404(level_id, db)
 
-
 @router.post("/{level_id}/answer", response_model=AnswerResponse)
 async def answer_level(
     level_id: int,
@@ -51,6 +50,8 @@ async def answer_level(
     db: Session = Depends(get_db),
 ) -> AnswerResponse:
     level = get_level_or_404(level_id, db)
+    print(f"DEBUG level.type='{level.type}' level.solution_hash='{level.solution_hash}'")
+    print(f"DEBUG payload.reponse='{payload.reponse}'")
     get_user_or_404(payload.user_id, db)
 
     answer_hash = hashlib.sha256(payload.reponse.encode("utf-8")).hexdigest()

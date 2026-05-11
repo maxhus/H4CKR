@@ -1,5 +1,5 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI  # type: ignore[import]
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import]
  
 from app.db.base import Base
 from app.db.session import engine
