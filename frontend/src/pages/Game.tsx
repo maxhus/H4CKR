@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuthStore } from "../store/authStore";
-import ArtifactViewer from "../components/ArtifactViewer";
 
 interface Level {
   id: number;
@@ -19,6 +18,7 @@ export default function Game() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [currentLevel, setCurrentLevel] = useState<Level | null>(null);
   const [unlockedLevelIndex, setUnlockedLevelIndex] = useState(0);
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState(0);
@@ -28,6 +28,7 @@ export default function Game() {
   const [hintMalus, setHintMalus] = useState(0);
   const [noMoreHints, setNoMoreHints] = useState(false);
   const userId = useAuthStore((s) => s.userId);
+  const role = useAuthStore((s) => s.role);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
 
@@ -39,16 +40,14 @@ export default function Game() {
     ]).then(([levelsRes, progressRes]) => {
       const lvls: Level[] = levelsRes.data;
       setLevels(lvls);
-      const completedIds = new Set<number>(progressRes.data.map((p: { level_id: number }) => p.level_id));
+      const done = new Set<number>(progressRes.data.map((p: { level_id: number }) => p.level_id));
       const totalScore = progressRes.data.reduce((acc: number, p: { score: number }) => acc + p.score, 0);
+      setCompletedIds(done);
       setScore(totalScore);
-      // Détermine le dernier niveau déverrouillé
       let lastUnlocked = 0;
-      lvls.forEach((l, i) => {
-        if (completedIds.has(l.id)) lastUnlocked = i + 1;
-      });
+      lvls.forEach((l, i) => { if (done.has(l.id)) lastUnlocked = i + 1; });
       setUnlockedLevelIndex(Math.min(lastUnlocked, lvls.length - 1));
-      const firstUnlocked = lvls.find((l) => !completedIds.has(l.id)) ?? lvls[0];
+      const firstUnlocked = lvls.find((l) => !done.has(l.id)) ?? lvls[0];
       setCurrentLevel(firstUnlocked ?? null);
     });
   }, [userId]);
@@ -77,6 +76,7 @@ export default function Game() {
 
   const handleSubmit = async () => {
     if (!currentLevel || !userId) return;
+    if (completedIds.has(currentLevel.id)) return;
     setLoading(true);
     try {
       const res = await api.post(`/levels/${currentLevel.id}/answer`, {
@@ -85,12 +85,11 @@ export default function Game() {
         indices_utilises: hintMalus,
         extra: {},
       });
-
       if (res.data.valide) {
         setScore((s) => s + res.data.score);
+        setCompletedIds((prev) => new Set([...prev, currentLevel.id]));
         const currentIndex = levels.findIndex((l) => l.id === currentLevel.id);
         const nextIndex = currentIndex + 1;
-
         if (nextIndex < levels.length) {
           setUnlockedLevelIndex((prev) => Math.max(prev, nextIndex));
           setFeedback("ACCESS GRANTED — Niveau suivant débloqué !");
@@ -113,38 +112,48 @@ export default function Game() {
     }
   };
 
+  const isCompleted = currentLevel ? completedIds.has(currentLevel.id) : false;
+
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-8 flex flex-col gap-6">
 
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-xl tracking-widest">H4CKR</h1>
-        <div className="flex gap-4 text-sm">
+        <div className="flex gap-4 text-sm items-center">
           <span>SCORE: {score}</span>
           <button onClick={() => navigate("/leaderboard")} className="hover:underline">LEADERBOARD</button>
           <button onClick={() => navigate("/profile")} className="hover:underline">PROFILE</button>
+          {role === "admin" && (
+            <button onClick={() => navigate("/admin")} className="text-yellow-500 hover:underline">ADMIN</button>
+          )}
           <button onClick={() => { logout(); navigate("/"); }} className="text-red-500 hover:underline">LOGOUT</button>
         </div>
       </div>
 
-      {/* Carte du niveau */}
+      {/* Carte niveau */}
       {currentLevel && (
-        <div className="border border-green-800 p-4 flex flex-col gap-2">
-          <p className="text-xs text-green-600">
-            CHAPITRE {currentLevel.chapter} — NIVEAU {currentLevel.position} — {currentLevel.type.toUpperCase()}
-          </p>
+        <div className={`border p-4 flex flex-col gap-2 ${isCompleted ? "border-green-500 opacity-70" : "border-green-800"}`}>
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-green-600">
+              CHAPITRE {currentLevel.chapter} — NIVEAU {currentLevel.position} — {currentLevel.type.toUpperCase()}
+            </p>
+            {isCompleted && (
+              <span className="text-xs text-green-500 border border-green-500 px-2 py-0.5">✓ COMPLÉTÉ</span>
+            )}
+          </div>
           <p className="text-xs text-green-600">Points : {currentLevel.points}</p>
-          {currentLevel.title && (
-            <p className="text-lg">{currentLevel.title}</p>
-          )}
+          {currentLevel.title && <p className="text-lg">{currentLevel.title}</p>}
           {currentLevel.description && (
             <p className="text-sm text-green-300 leading-relaxed">{currentLevel.description}</p>
           )}
           {currentLevel.artifact_url && (
-            <ArtifactViewer type="file" url={currentLevel.artifact_url} />
+            <a href={currentLevel.artifact_url} target="_blank" className="text-xs text-green-600 underline mt-1">
+              → Voir l'artefact
+            </a>
           )}
 
-          {/* Indices affichés */}
+          {/* Indices */}
           {hints.length > 0 && (
             <div className="border border-yellow-800 p-3 mt-2 flex flex-col gap-2">
               <p className="text-xs text-yellow-600 tracking-widest">
@@ -156,22 +165,24 @@ export default function Game() {
             </div>
           )}
 
-          {/* Bouton indice */}
-          <button
-            onClick={handleHint}
-            disabled={noMoreHints}
-            className="text-xs text-yellow-600 border border-yellow-800 px-3 py-1 mt-1 hover:bg-yellow-900 transition w-fit disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {noMoreHints ? "AUCUN INDICE DISPONIBLE" : `DEMANDER UN INDICE${hints.length > 0 ? ` (indice ${hints.length + 1})` : ""}`}
-          </button>
+          {!isCompleted && (
+            <button
+              onClick={handleHint}
+              disabled={noMoreHints}
+              className="text-xs text-yellow-600 border border-yellow-800 px-3 py-1 mt-1 hover:bg-yellow-900 transition w-fit disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {noMoreHints ? "AUCUN INDICE DISPONIBLE" : `DEMANDER UN INDICE${hints.length > 0 ? ` (indice ${hints.length + 1})` : ""}`}
+            </button>
+          )}
         </div>
       )}
 
-      {/* Sélecteur de niveaux */}
+      {/* Sélecteur niveaux */}
       <div className="flex gap-2 flex-wrap">
         {levels.map((l, index) => {
           const isUnlocked = index <= unlockedLevelIndex;
           const isActive = currentLevel?.id === l.id;
+          const isDone = completedIds.has(l.id);
           return (
             <button
               key={l.id}
@@ -184,14 +195,13 @@ export default function Game() {
               }}
               disabled={!isUnlocked}
               className={`border px-3 py-1 text-sm transition ${
-                isActive
-                  ? "bg-green-500 text-black border-green-500"
-                  : isUnlocked
-                  ? "border-green-800 hover:border-green-500"
-                  : "border-green-900 text-green-900 cursor-not-allowed opacity-40"
+                isActive ? "bg-green-500 text-black border-green-500" :
+                isDone ? "border-green-600 text-green-600" :
+                isUnlocked ? "border-green-800 hover:border-green-500" :
+                "border-green-900 text-green-900 cursor-not-allowed opacity-40"
               }`}
             >
-              {l.chapter}-{l.position}{!isUnlocked ? " 🔒" : ""}
+              {isDone ? "✓ " : ""}{l.chapter}-{l.position}{!isUnlocked ? " 🔒" : ""}
             </button>
           );
         })}
@@ -203,23 +213,24 @@ export default function Game() {
         feedback === "ACCESS DENIED" ? "text-red-500" :
         feedback ? "text-yellow-400" : "text-green-800"
       }`}>
-        {feedback || "EN ATTENTE DE RÉPONSE..."}
+        {isCompleted ? "✓ CE NIVEAU EST DÉJÀ COMPLÉTÉ" : feedback || "EN ATTENTE DE RÉPONSE..."}
       </div>
 
-      {/* Input réponse */}
+      {/* Input */}
       <input
-        className="bg-black border border-green-500 p-2 outline-none"
-        placeholder="Saisissez votre réponse..."
+        className="bg-black border border-green-500 p-2 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+        placeholder={isCompleted ? "Niveau déjà complété" : "Saisissez votre réponse..."}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        onKeyDown={(e) => e.key === "Enter" && !isCompleted && handleSubmit()}
+        disabled={isCompleted}
       />
       <button
         onClick={handleSubmit}
-        disabled={loading || !currentLevel}
-        className="border border-green-500 p-2 hover:bg-green-500 hover:text-black transition disabled:opacity-50"
+        disabled={loading || !currentLevel || isCompleted}
+        className="border border-green-500 p-2 hover:bg-green-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? "SOUMISSION..." : "SOUMETTRE"}
+        {isCompleted ? "✓ COMPLÉTÉ" : loading ? "SOUMISSION..." : "SOUMETTRE"}
       </button>
     </div>
   );

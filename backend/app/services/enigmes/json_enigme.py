@@ -1,9 +1,7 @@
-import json
+import hashlib
 
-def verifier_json(json_casse: str, cle_cible: str, reponse: str) -> bool:
-    try:
-        data = json.loads(json_casse)
-        valeur = data.get(cle_cible)
-        return str(valeur).strip() == reponse.strip()
-    except Exception:
-        return False
+def _hash(text: str) -> str:
+    return hashlib.sha256(text.strip().lower().encode("utf-8")).hexdigest()
+
+def verifier_json(json_casse: str, cle_cible: str, reponse: str, solution_hash: str) -> bool:
+    return _hash(reponse) == solution_hash.strip()

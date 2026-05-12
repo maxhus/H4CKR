@@ -11,33 +11,13 @@ def verifier_base64(reponse: str, solution_hash: str) -> bool:
     return _hash(reponse) == solution_hash.strip()
 
 def verifier_cesar(reponse: str, solution_hash: str, decalage: int) -> bool:
-    def cesar(text, d):
-        result = ""
-        for c in text:
-            if c.isalpha():
-                base = ord('A') if c.isupper() else ord('a')
-                result += chr((ord(c) - base + d) % 26 + base)
-            else:
-                result += c
-        return result
-    decoded = cesar(reponse, -decalage)
-    return _hash(decoded) == solution_hash.strip()
+    return _hash(reponse) == solution_hash.strip()
 
 def verifier_rot13(reponse: str, solution_hash: str) -> bool:
-    decoded = codecs.encode(reponse, 'rot_13')
-    return _hash(decoded) == solution_hash.strip()
+    return _hash(reponse) == solution_hash.strip()
 
 def verifier_hex(reponse: str, solution_hash: str) -> bool:
-    try:
-        decoded = binascii.unhexlify(reponse.strip()).decode("utf-8")
-        return _hash(decoded) == solution_hash.strip()
-    except Exception:
-        return False
+    return _hash(reponse) == solution_hash.strip()
 
 def verifier_binaire(reponse: str, solution_hash: str) -> bool:
-    try:
-        bits = reponse.strip().split()
-        decoded = ''.join(chr(int(b, 2)) for b in bits)
-        return _hash(decoded) == solution_hash.strip()
-    except Exception:
-        return False
+    return _hash(reponse) == solution_hash.strip()
