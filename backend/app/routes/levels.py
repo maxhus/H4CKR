@@ -69,20 +69,28 @@ async def answer_level(
     elif level.type == "binaire":
         validated = encodage.verifier_binaire(payload.reponse, level.solution_hash)
     elif level.type == "regex":
-        targets = payload.extra.get("targets", [])
-        non_targets = payload.extra.get("non_targets", [])
-        validated = regex_enigme.verifier_regex(payload.reponse, targets, non_targets)
+        validated = regex_enigme.verifier_regex(
+            payload.reponse,
+            payload.extra.get("targets", []),
+            payload.extra.get("non_targets", []),
+            level.solution_hash
+        )
     elif level.type == "json":
-        json_casse = payload.extra.get("json_casse", "")
-        cle_cible = payload.extra.get("cle_cible", "")
-        validated = json_enigme.verifier_json(json_casse, cle_cible, payload.reponse)
+        validated = json_enigme.verifier_json(
+            payload.extra.get("json_casse", ""),
+            payload.extra.get("cle_cible", ""),
+            payload.reponse,
+            level.solution_hash
+        )
     elif level.type == "exif":
         validated = exif_enigme.verifier_exif(
-            level.artifact_url, payload.extra.get("champ", ""), payload.reponse
+            level.artifact_url, payload.extra.get("champ", ""),
+            payload.reponse, level.solution_hash
         )
     elif level.type == "http":
         validated = await http_enigme.verifier_http(
-            level.artifact_url, payload.extra.get("header", ""), payload.reponse
+            level.artifact_url, payload.extra.get("header", ""),
+            payload.reponse, level.solution_hash
         )
     else:
         raise HTTPException(status_code=400, detail="Unsupported level type")

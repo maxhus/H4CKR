@@ -1,14 +1,7 @@
-import re
+import re, hashlib
 
-def verifier_regex(pattern: str, targets: list[str], non_targets: list[str]) -> bool:
-    try:
-        compiled = re.compile(pattern)
-        for t in targets:
-            if not compiled.search(t):
-                return False
-        for nt in non_targets:
-            if compiled.search(nt):
-                return False
-        return True
-    except re.error:
-        return False
+def _hash(text: str) -> str:
+    return hashlib.sha256(text.strip().lower().encode("utf-8")).hexdigest()
+
+def verifier_regex(pattern: str, targets: list[str], non_targets: list[str], solution_hash: str) -> bool:
+    return _hash(pattern) == solution_hash.strip()
