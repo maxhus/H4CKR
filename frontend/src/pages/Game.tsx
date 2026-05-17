@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuthStore } from "../store/authStore";
@@ -15,34 +15,35 @@ interface Level {
 }
 
 // ─── Écran de félicitations ───────────────────────────────────
-function VictoryScreen({ score, time, onLeaderboard }: { score: number; time: string; onLeaderboard: () => void }) {
+function VictoryScreen({ score, time, onLeaderboard, onLogout }: {
+  score: number;
+  time: string;
+  onLeaderboard: () => void;
+  onLogout: () => void;
+}) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { setTimeout(() => setVisible(true), 100); }, []);
 
   return (
     <div className={`fixed inset-0 bg-black z-50 flex items-center justify-center font-mono transition-opacity duration-700 ${visible ? "opacity-100" : "opacity-0"}`}>
-      {/* Fond animé */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => (
           <div key={i} className="absolute text-green-900 text-xs animate-pulse"
-            style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 2}s` }}>
-            {Math.random() > 0.5 ? "01" : "10"}
+            style={{ left: `${(i * 17 + 5) % 100}%`, top: `${(i * 23 + 10) % 100}%`, animationDelay: `${(i * 0.3) % 2}s` }}>
+            {i % 2 === 0 ? "01" : "10"}
           </div>
         ))}
       </div>
 
       <div className="relative border border-green-500 bg-black p-12 max-w-lg w-full text-center flex flex-col gap-6 shadow-2xl shadow-green-900/50">
-        {/* Titre */}
         <div>
           <p className="text-xs text-green-600 tracking-widest mb-2">MISSION ACCOMPLIE</p>
           <h1 className="text-4xl text-green-400 tracking-widest mb-1">H4CKR</h1>
           <p className="text-xs text-green-700">NEXUS CORP — SYSTÈME COMPROMIS</p>
         </div>
 
-        {/* Séparateur */}
         <div className="border-t border-green-900" />
 
-        {/* Stats */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center border border-green-900 p-3">
             <span className="text-xs text-green-600 tracking-widest">SCORE FINAL</span>
@@ -58,13 +59,11 @@ function VictoryScreen({ score, time, onLeaderboard }: { score: number; time: st
           </div>
         </div>
 
-        {/* Message */}
         <p className="text-xs text-green-700 leading-relaxed">
           Tu as infiltré avec succès les serveurs de NEXUS Corp.<br />
           Toutes les données ont été exfiltrées. Mission terminée.
         </p>
 
-        {/* Boutons */}
         <div className="flex gap-3">
           <button
             onClick={onLeaderboard}
@@ -72,13 +71,19 @@ function VictoryScreen({ score, time, onLeaderboard }: { score: number; time: st
           >
             VOIR LE CLASSEMENT
           </button>
+          <button
+            onClick={onLogout}
+            className="flex-1 border border-red-600 text-red-500 p-3 text-sm hover:bg-red-600 hover:text-black transition"
+          >
+            DÉCONNEXION
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Composant Timer ──────────────────────────────────────────
+// ─── Timer ────────────────────────────────────────────────────
 function Timer({ startTime, stopped }: { startTime: number; stopped: boolean }) {
   const [elapsed, setElapsed] = useState(0);
 
@@ -94,8 +99,8 @@ function Timer({ startTime, stopped }: { startTime: number; stopped: boolean }) 
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
   const pad = (n: number) => String(n).padStart(2, "0");
+
   return (
     <span className="text-xs text-green-700 tabular-nums">
       {hours > 0 ? `${pad(hours)}:` : ""}{pad(minutes)}:{pad(seconds)}
@@ -151,7 +156,6 @@ export default function Game() {
       setUnlockedLevelIndex(Math.min(lastUnlocked, lvls.length - 1));
       const firstUnlocked = lvls.find((l) => !done.has(l.id)) ?? lvls[0];
       setCurrentLevel(firstUnlocked ?? null);
-      // Déjà tout complété au chargement
       if (done.size === lvls.length && lvls.length > 0) setGameWon(true);
     });
   }, [userId]);
@@ -190,18 +194,15 @@ export default function Game() {
         extra: {},
       });
       if (res.data.valide) {
-        const newScore = score + res.data.score;
         const newCompleted = new Set([...completedIds, currentLevel.id]);
-        setScore(newScore);
+        setScore((s) => s + res.data.score);
         setCompletedIds(newCompleted);
 
         const currentIndex = levels.findIndex((l) => l.id === currentLevel.id);
         const nextIndex = currentIndex + 1;
 
-        // Vérifier si c'est le dernier niveau
         if (newCompleted.size === levels.length) {
-          const now = Date.now();
-          setEndTime(now);
+          setEndTime(Date.now());
           setFeedback("🎉 ACCESS GRANTED — Tous les niveaux complétés !");
           setTimeout(() => setGameWon(true), 2000);
         } else if (nextIndex < levels.length) {
@@ -225,17 +226,17 @@ export default function Game() {
   };
 
   const isCompleted = currentLevel ? completedIds.has(currentLevel.id) : false;
-  const totalTime = endTime ? formatTime(endTime - startTime) : formatTime(Date.now() - startTime);
+  const totalTime = formatTime(endTime ? endTime - startTime : Date.now() - startTime);
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-8 flex flex-col gap-6">
 
-      {/* Écran victoire */}
       {gameWon && (
         <VictoryScreen
           score={score}
           time={totalTime}
           onLeaderboard={() => navigate("/leaderboard")}
+          onLogout={() => { logout(); navigate("/"); }}
         />
       )}
 
@@ -290,7 +291,6 @@ export default function Game() {
             </a>
           )}
 
-          {/* Indices */}
           {hints.length > 0 && (
             <div className="border border-yellow-800 p-3 mt-2 flex flex-col gap-2">
               <p className="text-xs text-yellow-600 tracking-widest">
