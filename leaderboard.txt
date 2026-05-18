@@ -1,0 +1,11 @@
+from sqlalchemy import Column, Integer, String
+
+from app.db.base import Base
+
+
+class Leaderboard(Base):
+    __tablename__ = "leaderboard"
+
+    user_id = Column(Integer, primary_key=True)
+    username = Column(String)
+    total_score = Column(Integer)
