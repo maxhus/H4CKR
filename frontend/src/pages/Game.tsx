@@ -14,6 +14,110 @@ interface Level {
   points: number;
 }
 
+// ─── Écran de félicitations ───────────────────────────────────
+function VictoryScreen({ score, time, onLeaderboard, onLogout }: {
+  score: number;
+  time: string;
+  onLeaderboard: () => void;
+  onLogout: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { setTimeout(() => setVisible(true), 100); }, []);
+
+  return (
+    <div className={`fixed inset-0 bg-black z-50 flex items-center justify-center font-mono transition-opacity duration-700 ${visible ? "opacity-100" : "opacity-0"}`}>
+      <div className="absolute inset-0 overflow-hidden">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div key={i} className="absolute text-green-900 text-xs animate-pulse"
+            style={{ left: `${(i * 17 + 5) % 100}%`, top: `${(i * 23 + 10) % 100}%`, animationDelay: `${(i * 0.3) % 2}s` }}>
+            {i % 2 === 0 ? "01" : "10"}
+          </div>
+        ))}
+      </div>
+
+      <div className="relative border border-green-500 bg-black p-12 max-w-lg w-full text-center flex flex-col gap-6 shadow-2xl shadow-green-900/50">
+        <div>
+          <p className="text-xs text-green-600 tracking-widest mb-2">MISSION ACCOMPLIE</p>
+          <h1 className="text-4xl text-green-400 tracking-widest mb-1">H4CKR</h1>
+          <p className="text-xs text-green-700">NEXUS CORP — SYSTÈME COMPROMIS</p>
+        </div>
+
+        <div className="border-t border-green-900" />
+
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center border border-green-900 p-3">
+            <span className="text-xs text-green-600 tracking-widest">SCORE FINAL</span>
+            <span className="text-2xl text-green-400">{score}</span>
+          </div>
+          <div className="flex justify-between items-center border border-green-900 p-3">
+            <span className="text-xs text-green-600 tracking-widest">TEMPS TOTAL</span>
+            <span className="text-lg text-green-400">{time}</span>
+          </div>
+          <div className="flex justify-between items-center border border-green-900 p-3">
+            <span className="text-xs text-green-600 tracking-widest">NIVEAUX COMPLÉTÉS</span>
+            <span className="text-lg text-green-400">15 / 15</span>
+          </div>
+        </div>
+
+        <p className="text-xs text-green-700 leading-relaxed">
+          Tu as infiltré avec succès les serveurs de NEXUS Corp.<br />
+          Toutes les données ont été exfiltrées. Mission terminée.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onLeaderboard}
+            className="flex-1 border border-green-500 p-3 text-sm hover:bg-green-500 hover:text-black transition"
+          >
+            VOIR LE CLASSEMENT
+          </button>
+          <button
+            onClick={onLogout}
+            className="flex-1 border border-red-600 text-red-500 p-3 text-sm hover:bg-red-600 hover:text-black transition"
+          >
+            DÉCONNEXION
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Timer ────────────────────────────────────────────────────
+function Timer({ startTime, stopped }: { startTime: number; stopped: boolean }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (stopped) return;
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startTime);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startTime, stopped]);
+
+  const totalSeconds = Math.floor(elapsed / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    <span className="text-xs text-green-700 tabular-nums">
+      {hours > 0 ? `${pad(hours)}:` : ""}{pad(minutes)}:{pad(seconds)}
+    </span>
+  );
+}
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return hours > 0 ? `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s` : `${pad(minutes)}m ${pad(seconds)}s`;
+}
+
+// ─── Page principale ──────────────────────────────────────────
 export default function Game() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [currentLevel, setCurrentLevel] = useState<Level | null>(null);
@@ -27,6 +131,9 @@ export default function Game() {
   const [hintPosition, setHintPosition] = useState(0);
   const [hintMalus, setHintMalus] = useState(0);
   const [noMoreHints, setNoMoreHints] = useState(false);
+  const [gameWon, setGameWon] = useState(false);
+  const [startTime] = useState(Date.now());
+  const [endTime, setEndTime] = useState<number | null>(null);
   const userId = useAuthStore((s) => s.userId);
   const role = useAuthStore((s) => s.role);
   const logout = useAuthStore((s) => s.logout);
@@ -49,6 +156,7 @@ export default function Game() {
       setUnlockedLevelIndex(Math.min(lastUnlocked, lvls.length - 1));
       const firstUnlocked = lvls.find((l) => !done.has(l.id)) ?? lvls[0];
       setCurrentLevel(firstUnlocked ?? null);
+      if (done.size === lvls.length && lvls.length > 0) setGameWon(true);
     });
   }, [userId]);
 
@@ -86,11 +194,18 @@ export default function Game() {
         extra: {},
       });
       if (res.data.valide) {
+        const newCompleted = new Set([...completedIds, currentLevel.id]);
         setScore((s) => s + res.data.score);
-        setCompletedIds((prev) => new Set([...prev, currentLevel.id]));
+        setCompletedIds(newCompleted);
+
         const currentIndex = levels.findIndex((l) => l.id === currentLevel.id);
         const nextIndex = currentIndex + 1;
-        if (nextIndex < levels.length) {
+
+        if (newCompleted.size === levels.length) {
+          setEndTime(Date.now());
+          setFeedback("🎉 ACCESS GRANTED — Tous les niveaux complétés !");
+          setTimeout(() => setGameWon(true), 2000);
+        } else if (nextIndex < levels.length) {
           setUnlockedLevelIndex((prev) => Math.max(prev, nextIndex));
           setFeedback("ACCESS GRANTED — Niveau suivant débloqué !");
           setTimeout(() => {
@@ -99,8 +214,6 @@ export default function Game() {
             setFeedback("");
             resetHints();
           }, 1500);
-        } else {
-          setFeedback("🎉 ACCESS GRANTED — Tous les niveaux complétés !");
         }
       } else {
         setFeedback("ACCESS DENIED");
@@ -113,14 +226,25 @@ export default function Game() {
   };
 
   const isCompleted = currentLevel ? completedIds.has(currentLevel.id) : false;
+  const totalTime = formatTime(endTime ? endTime - startTime : Date.now() - startTime);
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-8 flex flex-col gap-6">
+
+      {gameWon && (
+        <VictoryScreen
+          score={score}
+          time={totalTime}
+          onLeaderboard={() => navigate("/leaderboard")}
+          onLogout={() => { logout(); navigate("/"); }}
+        />
+      )}
 
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-xl tracking-widest">H4CKR</h1>
         <div className="flex gap-4 text-sm items-center">
+          <Timer startTime={startTime} stopped={gameWon} />
           <span>SCORE: {score}</span>
           <button onClick={() => navigate("/leaderboard")} className="hover:underline">LEADERBOARD</button>
           <button onClick={() => navigate("/profile")} className="hover:underline">PROFILE</button>
@@ -128,6 +252,20 @@ export default function Game() {
             <button onClick={() => navigate("/admin")} className="text-yellow-500 hover:underline">ADMIN</button>
           )}
           <button onClick={() => { logout(); navigate("/"); }} className="text-red-500 hover:underline">LOGOUT</button>
+        </div>
+      </div>
+
+      {/* Progression globale */}
+      <div>
+        <div className="flex justify-between text-xs text-green-700 mb-1">
+          <span>PROGRESSION</span>
+          <span>{completedIds.size} / {levels.length} niveaux</span>
+        </div>
+        <div className="h-1 bg-green-950 w-full">
+          <div
+            className="h-1 bg-green-500 transition-all duration-500"
+            style={{ width: levels.length > 0 ? `${(completedIds.size / levels.length) * 100}%` : "0%" }}
+          />
         </div>
       </div>
 
@@ -153,7 +291,6 @@ export default function Game() {
             </a>
           )}
 
-          {/* Indices */}
           {hints.length > 0 && (
             <div className="border border-yellow-800 p-3 mt-2 flex flex-col gap-2">
               <p className="text-xs text-yellow-600 tracking-widest">
