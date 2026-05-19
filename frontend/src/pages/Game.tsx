@@ -5,7 +5,7 @@ import { useAuthStore } from "../store/authStore";
 import AvatarCompanion from "../components/AvatarCompanion";
 import MatrixRain from "../components/MatrixRain";
 import { useChiptune } from "../hooks/useChiptune";
-import PhaserGame from "../game/phasergame.jsx";
+import PhaserGame from "../game/phasergame";
 
 type AvatarTrigger = "idle" | "typing" | "wrong" | "hint" | "correct" | "victory" | "login";
 
@@ -92,6 +92,7 @@ export default function Game() {
   const [completedLevels, setCompletedLevels] = useState<number[]>([]);
   const [score, setScore] = useState(0);
   const [gameWon, setGameWon] = useState(false);
+  const [loaded, setLoaded] = useState(false); // ← attend l'API avant de monter Phaser
   const [startTime] = useState(Date.now());
   const [endTime, setEndTime] = useState<number | null>(null);
   const [avatarTrigger, setAvatarTrigger] = useState<AvatarTrigger>("idle");
@@ -105,11 +106,16 @@ export default function Game() {
   useEffect(() => {
     if (!userId) return;
     api.get(`/progress?user_id=${userId}`).then((res) => {
-      const ids = res.data.map((p: { level_id: number }) => p.level_id);
-      const total = res.data.reduce((acc: number, p: { score: number }) => acc + p.score, 0);
+      const ids: number[] = res.data.map((p: { level_id: number }) => p.level_id);
+      const total: number = res.data.reduce((acc: number, p: { score: number }) => acc + p.score, 0);
       setCompletedLevels(ids);
       setScore(total);
-      if (ids.length === 15) { setGameWon(true); setAvatarTrigger("victory"); }
+      if (ids.length === 15) {
+        setGameWon(true);
+        setAvatarTrigger("victory");
+      }
+    }).finally(() => {
+      setLoaded(true); // Phaser monte seulement après la réponse API
     });
   }, [userId]);
 
@@ -165,12 +171,18 @@ export default function Game() {
           style={{ width: `${(completedLevels.length / 15) * 100}%`, boxShadow: "0 0 4px #00ff44" }} />
       </div>
 
-      {/* Zone Phaser */}
+      {/* Zone Phaser — montée uniquement après chargement de la progression */}
       <div className="flex-1 flex items-center justify-center p-4 bg-black">
-        <PhaserGame
-          completedLevels={completedLevels}
-          onLevelComplete={handleLevelComplete}
-        />
+        {!loaded ? (
+          <div className="text-green-800 text-sm font-mono animate-pulse tracking-widest">
+            {">"} CHARGEMENT DE LA PROGRESSION...
+          </div>
+        ) : (
+          <PhaserGame
+            completedLevels={completedLevels}
+            onLevelComplete={handleLevelComplete}
+          />
+        )}
       </div>
 
       <AvatarCompanion trigger={avatarTrigger} />
