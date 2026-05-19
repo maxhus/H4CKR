@@ -22,10 +22,14 @@ interface Props {
 export default function PhaserGame({ completedLevels, onLevelComplete }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
-  const sceneRef = useRef<GameScene | null>(null);
-
   const [terminal, setTerminal] = useState<TerminalData | null>(null);
   const [dialogue, setDialogue] = useState<DialogueData | null>(null);
+  const completedRef = useRef<number[]>(completedLevels);
+
+  // Garde completedRef à jour sans recréer le jeu
+  useEffect(() => {
+    completedRef.current = completedLevels;
+  }, [completedLevels]);
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
@@ -35,7 +39,7 @@ export default function PhaserGame({ completedLevels, onLevelComplete }: Props) 
       width: 800,
       height: 500,
       parent: containerRef.current,
-      backgroundColor: "#0a0a0a",
+      backgroundColor: "#080808",
       physics: {
         default: "arcade",
         arcade: { gravity: { x: 0, y: 0 }, debug: false },
@@ -43,12 +47,15 @@ export default function PhaserGame({ completedLevels, onLevelComplete }: Props) 
       scene: [GameScene],
       pixelArt: true,
       roundPixels: true,
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+      },
     };
 
     const game = new Phaser.Game(config);
     gameRef.current = game;
 
-    // Écouter les events Phaser → React
     game.events.on(EVENTS.OPEN_TERMINAL, (data: TerminalData) => {
       setTerminal(data);
     });
@@ -61,9 +68,12 @@ export default function PhaserGame({ completedLevels, onLevelComplete }: Props) 
       setDialogue(null);
     });
 
-    // Récupérer la référence à la scène
-    game.events.on("ready", () => {
-      sceneRef.current = game.scene.getScene("GameScene") as GameScene;
+    // Init avec les niveaux déjà complétés
+    game.events.once("ready", () => {
+      const scene = game.scene.getScene("GameScene") as GameScene;
+      if (scene && completedRef.current.length > 0) {
+        scene.scene.restart({ completedLevels: completedRef.current, mode: "corridor" });
+      }
     });
 
     return () => {
@@ -72,41 +82,38 @@ export default function PhaserGame({ completedLevels, onLevelComplete }: Props) 
     };
   }, []);
 
-  // Passer completedLevels à la scène au démarrage
-  useEffect(() => {
-    if (gameRef.current) {
-      const scene = gameRef.current.scene.getScene("GameScene") as GameScene;
-      if (scene) {
-        scene.scene.restart({ completedLevels });
-      }
-    }
-  }, [completedLevels]);
-
   const handleTerminalSuccess = (levelId: number, score: number) => {
     setTerminal(null);
     onLevelComplete(levelId, score);
-    // Notifier la scène Phaser
     const scene = gameRef.current?.scene.getScene("GameScene") as GameScene;
     if (scene) scene.markLevelComplete(levelId);
   };
 
-  return (
-    <div className="relative">
-      {/* Canvas Phaser */}
-      <div ref={containerRef} className="border border-green-900" style={{ imageRendering: "pixelated" }} />
+  const handleCloseTerminal = () => {
+    setTerminal(null);
+    // Rendre le focus au canvas Phaser pour que les contrôles reprennent
+    const canvas = containerRef.current?.querySelector("canvas");
+    if (canvas) canvas.focus();
+  };
 
-      {/* Overlay terminal (React par-dessus Phaser) */}
+  return (
+    <div className="relative select-none" style={{ width: 800, height: 500 }}>
+      <div
+        ref={containerRef}
+        className="border border-green-900"
+        style={{ width: 800, height: 500, imageRendering: "pixelated" }}
+      />
+
       {terminal && (
         <TerminalModal
           levelId={terminal.levelId}
           name={terminal.name}
           completedLevels={completedLevels}
           onSuccess={handleTerminalSuccess}
-          onClose={() => setTerminal(null)}
+          onClose={handleCloseTerminal}
         />
       )}
 
-      {/* Dialogue NPC */}
       {dialogue && (
         <DialogueBox
           speaker={dialogue.speaker}
