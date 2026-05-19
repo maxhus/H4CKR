@@ -41,7 +41,7 @@ export default function Leaderboard() {
               LEADERBOARD
             </h1>
           </div>
-          <button onClick={() => navigate("/game")}
+          <button onClick={() => navigate(-1)}
             className="text-xs border border-green-800 px-4 py-2 hover:border-green-500 hover:text-green-300 transition">
             ← RETOUR
           </button>

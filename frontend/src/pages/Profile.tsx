@@ -148,7 +148,7 @@ export default function Profile() {
         </div>
 
         {/* Bouton logout */}
-        <button onClick={() => { logout(); navigate("/"); }}
+        <button onClick={() => { logout(); navigate(-1); }}
           className="mt-8 w-full border border-red-800 text-red-600 p-3 text-sm tracking-widest hover:bg-red-900 hover:bg-opacity-30 hover:border-red-600 transition">
           [ DÉCONNEXION ]
         </button>
