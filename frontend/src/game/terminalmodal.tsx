@@ -19,16 +19,11 @@ interface LevelData {
   artifact_url: string | null;
 }
 
-interface Hint {
-  content: string;
-  malus: number;
-}
-
 export default function TerminalModal({ levelId, name, completedLevels, onSuccess, onClose }: Props) {
   const [level, setLevel] = useState<LevelData | null>(null);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [hints, setHints] = useState<Hint[]>([]);
+  const [hints, setHints] = useState<{ content: string; malus: number }[]>([]);
   const [hintPos, setHintPos] = useState(0);
   const [hintMalus, setHintMalus] = useState(0);
   const [noMoreHints, setNoMoreHints] = useState(false);
@@ -39,25 +34,22 @@ export default function TerminalModal({ levelId, name, completedLevels, onSucces
   const alreadyDone = completedLevels.includes(levelId);
 
   useEffect(() => {
-  api.get(`/levels/${levelId}`).then((r) => {
-    setLevel(r.data);
-    const l = r.data;
-    const seq = [
-      `> CONNEXION À ${name}...`,
-      `> AUTHENTIFICATION...`,
-      `> ACCÈS NIVEAU ${levelId} — [${l.type?.toUpperCase()}]`,
-      `> ${l.title || "TERMINAL"}`,
-      `─────────────────────────────`,
-    ];
-    // Ajouter les lignes une par une avec délai
-    seq.forEach((line, i) => {
-      setTimeout(() => {
-        setLines((prev) => [...prev, line]);
-      }, i * 150);
+    setLines([]);
+    api.get(`/levels/${levelId}`).then((r) => {
+      setLevel(r.data);
+      const l = r.data;
+      const seq = [
+        `> CONNEXION À ${name}...`,
+        `> AUTHENTIFICATION...`,
+        `> ACCÈS NIVEAU ${levelId} — [${l.type?.toUpperCase()}]`,
+        `─────────────────────────────────`,
+      ];
+      seq.forEach((line, i) => {
+        setTimeout(() => setLines((prev) => [...prev, line]), i * 120);
+      });
     });
-  });
-  inputRef.current?.focus();
-}, [levelId]);
+    setTimeout(() => inputRef.current?.focus(), 600);
+  }, [levelId]);
 
   const handleHint = async () => {
     if (!userId || noMoreHints) return;
@@ -72,23 +64,20 @@ export default function TerminalModal({ levelId, name, completedLevels, onSucces
   };
 
   const handleSubmit = async () => {
-    if (!userId || !answer.trim()) return;
+    if (!userId || !answer.trim() || alreadyDone) return;
     setLoading(true);
     try {
       const res = await api.post(`/levels/${levelId}/answer`, {
-        user_id: userId,
-        reponse: answer,
-        indices_utilises: hintMalus,
-        extra: {},
+        user_id: userId, reponse: answer, indices_utilises: hintMalus, extra: {},
       });
       if (res.data.valide) {
-        setLines((l) => [...l, "", `> ACCÈS ACCORDÉ ✓`, `> SCORE: +${res.data.score} pts`]);
+        setLines((l) => [...l, "", `> ACCÈS ACCORDÉ ✓`, `> SCORE: +${res.data.score} pts`, `> RETOUR AU COULOIR...`]);
         setFeedback("granted");
-        setTimeout(() => onSuccess(levelId, res.data.score), 1500);
+        setTimeout(() => onSuccess(levelId, res.data.score), 1800);
       } else {
-        setLines((l) => [...l, `> ACCÈS REFUSÉ ✗ — MAUVAISE RÉPONSE`]);
+        setLines((l) => [...l, `> ACCÈS REFUSÉ ✗`]);
         setFeedback("denied");
-        setTimeout(() => setFeedback(""), 1000);
+        setTimeout(() => setFeedback(""), 1200);
       }
     } catch {
       setFeedback("error");
@@ -97,38 +86,53 @@ export default function TerminalModal({ levelId, name, completedLevels, onSucces
     }
   };
 
-  return (
-    <div className="absolute inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="border border-green-500 bg-black w-full max-w-2xl font-mono text-green-400 shadow-lg shadow-green-900/30">
+  // Fermer avec Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
 
-        {/* Barre titre */}
-        <div className="flex justify-between items-center border-b border-green-800 px-4 py-2 bg-green-950">
-          <span className="text-xs tracking-widest">H4CKR TERMINAL — {name}</span>
-          <button onClick={onClose} className="text-green-600 hover:text-red-400 text-sm">✕ ESC</button>
+  return (
+    <div className="absolute inset-0 bg-black bg-opacity-92 flex items-center justify-center z-50"
+      style={{ backdropFilter: "blur(2px)" }}>
+      <div className="border border-green-500 bg-black w-full max-w-2xl font-mono text-green-400"
+        style={{ boxShadow: "0 0 40px rgba(0,255,68,0.15)" }}>
+
+        {/* Titre */}
+        <div className="flex justify-between items-center border-b border-green-800 px-4 py-2 bg-black"
+          style={{ background: "rgba(0,20,0,0.8)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs tracking-widest">H4CKR TERMINAL — {name}</span>
+          </div>
+          <button onClick={onClose} className="text-green-800 hover:text-red-400 text-xs transition">
+            ESC / ✕
+          </button>
         </div>
 
         {/* Écran terminal */}
-        <div className="p-4 h-48 overflow-y-auto text-xs leading-5 bg-black">
+        <div className="p-4 h-36 overflow-y-auto text-xs leading-5 bg-black font-mono">
           {lines.map((line, i) => (
             <div key={i} className={
               line.includes("ACCORDÉ") ? "text-green-400" :
               line.includes("REFUSÉ") ? "text-red-400" :
               line.startsWith("─") ? "text-green-900" :
-              "text-green-600"
+              line.startsWith(">") ? "text-green-600" : "text-green-800"
             }>{line}</div>
           ))}
-          {alreadyDone && (
-            <div className="text-green-400 mt-2">✓ CE TERMINAL A DÉJÀ ÉTÉ COMPROMIS</div>
-          )}
+          {alreadyDone && <div className="text-green-500 mt-1">✓ TERMINAL DÉJÀ COMPROMIS</div>}
         </div>
 
-        {/* Description */}
+        {/* Description énigme */}
         {level && (
-          <div className="border-t border-green-900 px-4 py-3 text-sm text-green-300 bg-black">
-            {level.description}
+          <div className="border-t border-green-900 px-4 py-3 text-sm text-green-300 bg-black leading-relaxed">
+            {level.title && <p className="text-green-400 font-bold mb-1">{level.title}</p>}
+            <p className="text-green-600 text-xs">{level.description}</p>
             {level.artifact_url && (
-              <a href={level.artifact_url} target="_blank" className="block mt-1 text-xs text-green-600 underline">
-                → Voir l'artefact
+              <a href={level.artifact_url} target="_blank"
+                className="block mt-2 text-xs text-green-700 hover:text-green-400 underline transition">
+                → Télécharger l'artefact
               </a>
             )}
           </div>
@@ -138,45 +142,39 @@ export default function TerminalModal({ levelId, name, completedLevels, onSucces
         {hints.length > 0 && (
           <div className="border-t border-yellow-900 px-4 py-2 bg-black">
             {hints.map((h, i) => (
-              <div key={i} className="text-xs text-yellow-500 mb-1">▶ {h.content}</div>
+              <div key={i} className="text-xs text-yellow-600 mb-1">▶ {h.content}</div>
             ))}
-            <div className="text-xs text-yellow-800">Malus actuel : -{hintMalus} pts</div>
+            <div className="text-xs text-yellow-900 mt-1">malus : -{hintMalus} pts</div>
           </div>
         )}
 
         {/* Input */}
-        <div className="border-t border-green-800 px-4 py-3 flex gap-2 items-center bg-black">
-          <span className="text-green-600 text-sm">{">"}</span>
+        <div className="border-t border-green-900 px-4 py-3 flex gap-2 items-center bg-black">
+          <span className="text-green-700 text-sm">{">"}</span>
           <input
             ref={inputRef}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="Entrez le code d'accès..."
-            className={`flex-1 bg-transparent outline-none text-sm border-b ${
-              feedback === "granted" ? "border-green-400 text-green-400" :
-              feedback === "denied" ? "border-red-500 text-red-400" :
-              "border-green-800 text-green-400"
-            }`}
-            disabled={loading || alreadyDone}
+            onKeyDown={(e) => e.key === "Enter" && !alreadyDone && handleSubmit()}
+            placeholder={alreadyDone ? "Terminal déjà compromis" : "Entrez le code d'accès..."}
+            className="flex-1 bg-transparent outline-none text-sm text-green-400 disabled:opacity-40"
+            style={{
+              borderBottom: `1px solid ${feedback === "granted" ? "#22c55e" : feedback === "denied" ? "#ef4444" : "#166534"}`,
+              caretColor: "#00ff44",
+            }}
+            disabled={loading || alreadyDone || feedback === "granted"}
           />
         </div>
 
-        {/* Actions */}
+        {/* Boutons */}
         <div className="flex border-t border-green-900">
-          <button
-            onClick={handleHint}
-            disabled={noMoreHints || alreadyDone}
-            className="flex-1 py-2 text-xs text-yellow-600 border-r border-green-900 hover:bg-yellow-950 transition disabled:opacity-30"
-          >
-            {noMoreHints ? "AUCUN INDICE" : `INDICE (-${hintPos === 0 ? "?" : "pts"})`}
+          <button onClick={handleHint} disabled={noMoreHints || alreadyDone}
+            className="flex-1 py-2 text-xs text-yellow-700 border-r border-green-900 hover:bg-yellow-950 transition disabled:opacity-30">
+            {noMoreHints ? "AUCUN INDICE" : hints.length === 0 ? "DEMANDER UN INDICE" : `INDICE ${hints.length + 1}`}
           </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || alreadyDone}
-            className="flex-1 py-2 text-xs text-green-400 hover:bg-green-950 transition disabled:opacity-30"
-          >
-            {loading ? "VÉRIFICATION..." : "SOUMETTRE [ENTER]"}
+          <button onClick={handleSubmit} disabled={loading || alreadyDone || feedback === "granted"}
+            className="flex-1 py-2 text-xs text-green-600 hover:bg-green-950 transition disabled:opacity-30">
+            {loading ? "VÉRIFICATION..." : feedback === "granted" ? "ACCÈS ACCORDÉ ✓" : "SOUMETTRE [ENTER]"}
           </button>
         </div>
       </div>
