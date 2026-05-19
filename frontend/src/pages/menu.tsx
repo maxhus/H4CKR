@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
-import MatrixRain from "../components/MatrixRain";
+import { useAuthStore } from "../store/authStore.ts";
+import MatrixRain from "../components/MatrixRain.jsx";
 import api from "../api/client.js";
 
 interface Settings {
