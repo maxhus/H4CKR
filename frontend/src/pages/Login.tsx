@@ -73,7 +73,7 @@ export default function Login() {
       setAuth(res.data.access_token, res.data.user_id, username, payload.role ?? "player");
       setAvatarTrigger("correct");
       await playSuccess();
-      setTimeout(() => navigate("/game"), 600);
+      setTimeout(() => navigate("/menu"), 600);
     } catch (err: any) {
       playError();
       setAvatarTrigger("wrong");
