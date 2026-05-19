@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/client.js";
 import { useAuthStore } from "../store/authStore";
 import MatrixRain from "../components/MatrixRain";
+import AvatarCompanion from "../components/AvatarCompanion";
 import { useChiptune } from "../hooks/useChiptune";
 
 function TypeWriter({ text, speed = 60, className = "" }: { text: string; speed?: number; className?: string }) {
@@ -47,6 +48,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [musicStarted, setMusicStarted] = useState(false);
   const [bootDone, setBootDone] = useState(false);
+  const [avatarTrigger, setAvatarTrigger] = useState<"idle" | "typing" | "wrong" | "hint" | "correct" | "victory" | "login">("login");
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
   const { start, playClick, playSuccess, playError } = useChiptune();
@@ -57,10 +59,7 @@ export default function Login() {
   }, []);
 
   const startMusic = async () => {
-    if (!musicStarted) {
-      await start();
-      setMusicStarted(true);
-    }
+    if (!musicStarted) { await start(); setMusicStarted(true); }
   };
 
   const handleSubmit = async () => {
@@ -72,10 +71,12 @@ export default function Login() {
       const res = await api.post(endpoint, { username, password });
       const payload = JSON.parse(atob(res.data.access_token.split(".")[1]));
       setAuth(res.data.access_token, res.data.user_id, username, payload.role ?? "player");
+      setAvatarTrigger("correct");
       await playSuccess();
-      setTimeout(() => navigate("/game"), 400);
+      setTimeout(() => navigate("/menu"), 600);
     } catch (err: any) {
       playError();
+      setAvatarTrigger("wrong");
       setError(err.response?.data?.detail || "Erreur de connexion");
     } finally {
       setLoading(false);
@@ -85,17 +86,13 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center font-mono overflow-hidden" onClick={startMusic}>
       <MatrixRain />
-
-      {/* Scanlines */}
       <div className="fixed inset-0 z-10 pointer-events-none"
         style={{ background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)" }} />
 
-      {/* Panel */}
       <div className="relative z-20 w-full max-w-sm px-4">
         <div className="border border-green-500 bg-black bg-opacity-90 p-8 flex flex-col gap-5"
           style={{ boxShadow: "0 0 40px rgba(0,255,68,0.15), inset 0 0 40px rgba(0,255,68,0.03)" }}>
 
-          {/* Logo */}
           <div className="text-center mb-2">
             <div className="text-4xl tracking-widest mb-1" style={{ textShadow: "0 0 20px #00ff44, 0 0 40px #00ff44" }}>
               <GlitchText text="H4CKR" className="text-green-400" />
@@ -107,14 +104,12 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Séparateur */}
           <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-green-900" />
             <span className="text-xs text-green-700">{"[ AUTHENTIFICATION ]"}</span>
             <div className="flex-1 h-px bg-green-900" />
           </div>
 
-          {/* Tabs */}
           <div className="flex gap-2">
             {(["login", "register"] as const).map((m) => (
               <button key={m} onClick={() => { setMode(m); playClick(); }}
@@ -126,7 +121,6 @@ export default function Login() {
             ))}
           </div>
 
-          {/* Inputs */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-green-700 tracking-widest">{">"} IDENTIFIANT</label>
@@ -135,7 +129,7 @@ export default function Login() {
                 style={{ caretColor: "#00ff44" }}
                 placeholder="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => { setUsername(e.target.value); setAvatarTrigger("typing"); }}
                 onFocus={startMusic}
               />
             </div>
@@ -147,21 +141,19 @@ export default function Login() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setAvatarTrigger("typing"); }}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 onFocus={startMusic}
               />
             </div>
           </div>
 
-          {/* Erreur */}
           {error && (
             <div className="border border-red-800 bg-red-950 bg-opacity-30 p-2 text-xs text-red-400">
               {">"} ERREUR: {error}
             </div>
           )}
 
-          {/* Submit */}
           <button onClick={handleSubmit} disabled={loading}
             className="border border-green-500 py-3 text-sm tracking-widest text-green-400 hover:bg-green-500 hover:text-black transition-all duration-200 disabled:opacity-50"
             style={{ boxShadow: "0 0 10px rgba(0,255,68,0.1)" }}>
@@ -175,12 +167,13 @@ export default function Login() {
           )}
         </div>
 
-        {/* Coins décoratifs */}
         <div className="absolute top-0 left-4 w-3 h-3 border-t-2 border-l-2 border-green-500" />
         <div className="absolute top-0 right-4 w-3 h-3 border-t-2 border-r-2 border-green-500" />
         <div className="absolute bottom-0 left-4 w-3 h-3 border-b-2 border-l-2 border-green-500" />
         <div className="absolute bottom-0 right-4 w-3 h-3 border-b-2 border-r-2 border-green-500" />
       </div>
+
+      <AvatarCompanion trigger={avatarTrigger} />
     </div>
   );
 }

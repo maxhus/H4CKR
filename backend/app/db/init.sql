@@ -49,6 +49,12 @@ CREATE TABLE IF NOT EXISTS progress (
     score INTEGER DEFAULT 0
 );
 
+-- ─── Reset propre des données et séquences ───────────────────
+
+TRUNCATE TABLE hints, levels CASCADE;
+ALTER SEQUENCE levels_id_seq RESTART WITH 1;
+ALTER SEQUENCE hints_id_seq RESTART WITH 1;
+
 -- ─── Niveaux ─────────────────────────────────────────────────
 
 INSERT INTO levels (chapter, position, type, title, description, artifact_url, solution_hash, points) VALUES
