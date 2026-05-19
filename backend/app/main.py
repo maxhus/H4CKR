@@ -8,6 +8,7 @@ import app.models  # importe tous les modèles pour que create_all les voie
 from app.routes.auth import router as auth_router
 from app.routes.levels import router as levels_router
 from app.routes.progress import router as progress_router
+from app.routes.users import router as users_router
  
 app = FastAPI(title="H4CKR API")
  
@@ -22,6 +23,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(levels_router)
 app.include_router(progress_router)
+app.include_router(users_router) 
  
 Base.metadata.create_all(bind=engine)
  
