@@ -8,12 +8,25 @@ from app.schemas import TokenResponse, UserCreate, UserLogin
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
-
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
+
     existing_user = db.query(User).filter(User.username == payload.username).first()
+
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
+
+    if payload.username.lower() == payload.password.lower():
+        raise HTTPException(status_code=400, detail="Password cannot be the same as username")
+
+    if len(payload.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must contain at least 8 characters")
+
+    if not any(c.isupper() for c in payload.password):
+        raise HTTPException(status_code=400, detail="Password must contain an uppercase letter")
+
+    if not any(c.isdigit() for c in payload.password):
+        raise HTTPException(status_code=400, detail="Password must contain a number")
 
     hashed_password = hash_password(payload.password)
     user = User(username=payload.username, password_hash=hashed_password)
@@ -21,15 +34,30 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    access_token = create_access_token({"sub": user.username, "user_id": user.id, "role": user.role})
+    access_token = create_access_token({
+        "sub": user.username,
+        "user_id": user.id,
+        "role": user.role
+    })
+
     return {"access_token": access_token, "user_id": user.id}
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == payload.username).first()
-    if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    access_token = create_access_token({"sub": user.username, "user_id": user.id, "role": user.role})
+    user = db.query(User).filter(User.username == payload.username).first()
+
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
+
+    access_token = create_access_token({
+        "sub": user.username,
+        "user_id": user.id,
+        "role": user.role
+    })
+
     return {"access_token": access_token, "user_id": user.id}
