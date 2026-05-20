@@ -50,7 +50,7 @@ jobs:
       - name: Charger les données SQL
         env:
           PGPASSWORD: h4ckr_secure_password
-        run: psql -h localhost -U h4ckr -d h4ckr_db -f ../db/init.sql
+        run: psql -h localhost -U h4ckr -d h4ckr_db -f ${{ github.workspace }}/backend/app/db/init.sql
 
       - name: Lint — Flake8
         run: flake8 app/ --max-line-length=999 --exclude=__pycache__ --ignore=E302,E303,E305,E401,E501,E701,E712,E128,W292,W293,W503,W504,F401,F811
