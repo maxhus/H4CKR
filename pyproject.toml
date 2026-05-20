@@ -1,11 +1,10 @@
 [tool.vercel]
 entrypoint = "backend.app.main:app"
 
-@"
+
 [project]
 name = "h4ckr"
 version = "2.0.0"
 
 [tool.vercel]
 entrypoint = "backend.app.main:app"
-"@ | Out-File -FilePath pyproject.toml -Encoding utf8
