@@ -108,20 +108,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy backend → Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-          working-directory: ./backend
-          vercel-args: '--prod'
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
-      - name: Deploy frontend → Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-          working-directory: ./frontend
-          vercel-args: '--prod'
+      - name: Deploy backend
+        run: vercel --token=${{ secrets.VERCEL_TOKEN }} --prod --yes
+        working-directory: backend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+
+      - name: Deploy frontend
+        run: vercel --token=${{ secrets.VERCEL_TOKEN }} --prod --yes
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
