@@ -1,808 +1,261 @@
-# H4CKR — Escape Game Numérique Full-Stack
-
-## Description
-
-H4CKR est un escape game numérique full-stack orienté cybersécurité et logique.
-
-Le joueur incarne un enquêteur numérique chargé d’infiltrer un réseau clandestin à travers plusieurs chapitres composés d’énigmes techniques.
-
-Le projet met l’accent sur :
-
-- la sécurité backend,
-- la validation serveur,
-- l’architecture API,
-- la persistance des données,
-- l’expérience immersive cyberpunk.
-
-Le frontend ne connaît jamais les réponses des énigmes : toute validation est effectuée côté serveur via hash SHA-256.
-
----
-
-# Objectifs pédagogiques
-
-Ce projet a été réalisé dans le cadre d’un projet B2 afin de travailler :
-
-- Développement Full-Stack
-- API REST sécurisée
-- Authentification JWT
-- PostgreSQL & ORM
-- Docker & DevOps
-- Tests backend
-- Architecture logicielle
-- UX/UI cyberpunk immersive
-
----
-
-# Technologies utilisées
-
-## Frontend
-
-- React
-- TypeScript
-- Vite
-- TailwindCSS
-- Axios
-- Zustand
-- React Router
-- Phaser.js (prévu pour la partie 2D)
-
-## Backend
-
-- FastAPI
-- Python 3.11
-- SQLAlchemy 2.0
-- Pydantic
-- JWT Authentication
-- Pytest
-
-## Base de données
-
-- PostgreSQL
-
-## DevOps
-
-- Docker
-- Docker Compose
-- GitHub Actions
-
----
-
-# Fonctionnalités principales
-
-## Système de comptes
-
-- Register/Login
-- JWT + Refresh Tokens
-- Rôles :
-    - Joueur
-    - Admin
-
----
-
-## Moteur d’énigmes sécurisé
-
-### Types d’énigmes
-
-- Base64
-- César
-- ROT13
-- Hexadécimal
-- Binaire
-- Regex
-- JSON malformé
-- Métadonnées EXIF
-- Analyse HTTP
-
-### Sécurité
-
-- Validation uniquement côté serveur
-- Hash SHA-256 + sel
-- Aucune solution exposée au frontend
-
----
-
-## Gameplay
-
-- 10 à 15 niveaux
-- 3 chapitres narratifs
-- Système d’indices avec malus
-- Leaderboard global
-- Progression sauvegardée
-- Timer serveur
-
----
-
-## Dashboard Admin
-
-- Ajouter des énigmes
-- Modifier les niveaux
-- Upload des artefacts
-- Gestion des indices
-
----
-
-# Architecture du projet
-
-```
-H4CKR/
-│
-├── backend/
-│   ├── app/
-│   ├── tests/
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   └── Dockerfile
-│
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-# Architecture technique
-
-```
-Frontend React + TypeScript
-        │
-        ▼
- REST API HTTPS
-        │
-        ▼
-Backend FastAPI
-        │
-        ▼
- PostgreSQL
-```
-
----
-
-# Base de données
-
-## Tables principales
-
-| Table | Description |
-| --- | --- |
-| users | Comptes utilisateurs |
-| levels | Niveaux / énigmes |
-| attempts | Tentatives des joueurs |
-| hints | Indices |
-| progress | Progression |
-| leaderboard | Classement |
-
----
-
-# Installation
-
-## Cloner le projet
-
-```
-git clone https://github.com/USERNAME/H4CKR.git
-cd H4CKR
-```
-
----
-
-# Backend
-
-```
-cd backend
-
-python-m venv venv
-
-# Windows
-venv\Scripts\activate
-
-pip install-r requirements.txt
-```
-
-Lancer l’API :
-
-```
-uvicorn app.main:app--reload
-```
-
-Swagger :
-
-```
-http://localhost:8000/docs
-```
-
----
-
-# Frontend
-
-```
-cd frontend
-
-npm install
-npm run dev
-```
-
-Frontend :
-
-```
-http://localhost:5173
-```
-
----
-
-# Docker
-
-Lancer tout le projet :
-
-```
-docker-compose up--build
-```
-
----
-
-# Tests
-
-## Backend tests
-
-```
-pytest
-```
-
-Objectif :
-
-- couverture ≥ 90% sur le moteur d’énigmes.
-
----
-
-# Sécurité
-
-Le frontend :
-
-- ne possède aucune solution,
-- ne valide rien localement,
-- envoie uniquement les réponses.
-
-Le backend :
-
-- hash les réponses,
-- compare les hashes,
-- enregistre toutes les tentatives.
-
----
-
-# Style visuel
-
-Le projet adopte une direction artistique :
-
-- cyberpunk,
-- terminal hacker,
-- ambiance néon,
-- exploration 2D inspirée de :
-    - HeXeR
-    - Enter the Gungeon
-
----
-
-# Avancement
-
-## Jour 1
-
-- Game Design Document
-- UML
-- Wireframes
-- Liste des artefacts
-
-## Jour 2
-
-- Backend API
-- PostgreSQL
-- JWT
-- Architecture FastAPI
-
-## Jour 3
-
-- Moteur d’énigmes
-- Validation serveur
-- Tests Pytest
-- Swagger
-
-## Jour 4
-
-- Frontend React
-- Routing
-- API Integration
-- UI cyberpunk
-
----
-
-# Auteurs
-
-Projet réalisé par :
-
-- Malchus
-
-Assistants IA utilisés :
-
-- ChatGPT
-- Claude
-
----
-
-# Licence
-
-Projet éducatif — B2 Full-Stack Cyber Escape Game.
-
-voici se qui a ete fait aujourd'hui, fait moi un resumer:App React + TypeScript avec routing (login, niveau courant, leaderboard, profil, admin)
-Composant ArtifactViewer : affiche un texte / une image / un fichier téléchargeable selon le type
-Terminal stylisé (Matrix-like) pour le feedback (vert si correct, rouge si incorrect)
-Connexion API + gestion d'état (Zustand ou Context). Aucune logique métier côté client
-Thème dark/cyberpunk via CSS modules ou Tailwind. On a aussi conncter le backend et le frontend. On a aussi reverifier le backend pour voir si tout est parfait
-
-# Résumé — Jour 4 : Frontend & Intégration
-
-Le Jour 4 a été consacré au développement complet du frontend de H4CKR ainsi qu’à la connexion avec le backend FastAPI.
-
-Une application React + TypeScript a été mise en place avec un système de routing permettant la navigation entre les différentes pages principales du projet :
-
-- login,
-- niveau courant,
-- leaderboard,
-- profil joueur,
-- dashboard administrateur.
-
-Le composant `ArtifactViewer` a été développé afin d’afficher dynamiquement les différents types d’artefacts utilisés dans les énigmes :
-
-- fichiers texte,
-- images,
-- fichiers téléchargeables.
-
-Un terminal stylisé inspiré des interfaces Matrix/cyberpunk a également été créé pour afficher les retours du système :
-
-- vert pour les réponses correctes,
-- rouge pour les réponses incorrectes.
-
-La connexion entre le frontend et le backend a été entièrement configurée via API REST avec Axios.
-
-Le frontend peut désormais :
-
-- envoyer les réponses,
-- récupérer les niveaux,
-- afficher la progression,
-- communiquer avec le système d’authentification JWT.
-
-La gestion d’état globale a été mise en place avec Zustand afin de stocker :
-
-- le token utilisateur,
-- les informations de session,
-- certaines données de progression.
-
-Aucune logique métier n’a été implémentée côté client afin de respecter les contraintes de sécurité du projet :
-
-- aucune solution n’est stockée dans le frontend,
-- aucune validation locale n’est effectuée,
-- toutes les vérifications sont réalisées côté serveur.
-
-Le thème visuel dark/cyberpunk a commencé à être intégré grâce à TailwindCSS afin de créer une ambiance immersive orientée hacking :
-
-- fond sombre,
-- texte néon,
-- terminal vert,
-- style rétro-futuriste.
-
-Enfin, une vérification complète du backend a été réalisée afin de confirmer :
-
-- le bon fonctionnement des endpoints,
-- la sécurité de la validation serveur,
-- l’absence de fuite des solutions,
-- la cohérence entre frontend, API et base de données.
-
-Les assistants IA ChatGPT et Claude ont également été utilisés aujourd’hui afin d’aider à :
-
-- structurer le frontend,
-- résoudre certains problèmes de configuration,
-- organiser l’architecture React,
-- optimiser la connexion API,
-- vérifier la cohérence globale du projet.
-
-README complet : description, installation, architecture, technologies, contribution. on est trois a avoir travailler sur le projet, Malxhus: front, Hamza: backend et Lamis: Documentation
-
 # H4CKR — Escape Game Numérique Full-Stack Cyberpunk
 
-## Description
+[![CI/CD](https://github.com/maxhus/H4CKR/actions/workflows/ci.yml/badge.svg)](https://github.com/maxhus/H4CKR/actions/workflows/ci.yml)
 
-H4CKR est un escape game numérique full-stack orienté cybersécurité, logique et investigation numérique.
+> Application web de hacking éducatif : infiltrez les 15 salles du serveur NEXUS CORP en résolvant des énigmes de cryptographie, encodage et logique.
 
-Le joueur incarne un enquêteur infiltrant les serveurs d’une organisation clandestine appelée **NEXUS** afin de découvrir la vérité derrière une intelligence artificielle nommée **H4CKR**.
+Le joueur incarne un enquêteur numérique infiltrant les serveurs d'une organisation clandestine afin de découvrir la vérité derrière une IA nommée **H4CKR**.
 
-Le projet mélange :
-
-- puzzles techniques,
-- analyse de données,
-- encodages,
-- métadonnées,
-- logique réseau,
-- sécurité backend.
-
-L’objectif principal du projet est de démontrer une architecture full-stack sécurisée où le frontend ne connaît jamais les réponses des énigmes.
-
-Toutes les validations sont réalisées côté serveur via FastAPI et comparaison de hash SHA-256.
+Le frontend ne connaît jamais les réponses des énigmes — toute validation est effectuée côté serveur via hash SHA-256.
 
 ---
 
-# Fonctionnalités principales
+## 🌐 Démo en ligne
 
-## Système de comptes
-
-- Inscription / connexion
-- Authentification JWT
-- Refresh tokens
-- Gestion des rôles :
-    - Joueur
-    - Administrateur
+| Service | URL |
+|---------|-----|
+| 🎮 Frontend | https://h4-ckr-z98c.vercel.app |
+| ⚙️ Backend API | https://h4-ckr.vercel.app |
+| 📖 Swagger / OpenAPI | https://h4-ckr.vercel.app/docs |
 
 ---
 
-## Moteur d’énigmes
+## 🚀 Démarrage rapide (Docker)
 
-### Types d’énigmes
-
-- Base64
-- César
-- ROT13
-- Hexadécimal
-- Binaire
-- Regex
-- JSON malformé
-- EXIF
-- HTTP Headers
-- HTTP Redirect
-
----
-
-## Gameplay
-
-- 10 à 15 niveaux
-- 3 chapitres narratifs
-- Système d’indices
-- Leaderboard
-- Progression sauvegardée
-- Timer serveur
-- Dashboard administrateur
-
----
-
-# Architecture technique
-
-```
-Frontend React + TypeScript
-            │
-            ▼
-      REST API HTTPS
-            │
-            ▼
-Backend FastAPI + Python
-            │
-            ▼
- PostgreSQL + SQLAlchemy
+```bash
+git clone https://github.com/maxhus/H4CKR.git
+cd H4CKR
+docker-compose up --build
 ```
 
+| Service | URL locale |
+|---------|-----------|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8000 |
+| Swagger | http://localhost:8000/docs |
+| PostgreSQL | localhost:5433 |
+
 ---
 
-# Technologies utilisées
+## 🏗️ Stack technique
 
-## Frontend
-
-- React
-- TypeScript
-- Vite
-- TailwindCSS
-- Axios
-- Zustand
+### Frontend
+- React 18 + TypeScript + Vite + TailwindCSS
+- Phaser 4 (moteur de jeu 2D)
+- Zustand (état global)
+- Axios (requêtes API)
+- Tone.js (audio)
 - React Router
-- Phaser.js (prévu)
+
+### Backend
+- FastAPI + Python 3.11
+- SQLAlchemy 2.0 + Pydantic
+- JWT Authentication (python-jose) + bcrypt
+- PostgreSQL 15
+
+### DevOps
+- Docker + Docker Compose
+- GitHub Actions (CI/CD)
+- Vercel (déploiement) + Neon (PostgreSQL cloud)
 
 ---
 
-## Backend
+## 🎮 Gameplay
 
-- FastAPI
-- Python 3.11
-- SQLAlchemy 2.0
-- Pydantic
-- JWT Authentication
-- Pytest
+### 4 chapitres — 15 niveaux
+
+| Chapitre | Thème | Types d'énigmes |
+|----------|-------|----------------|
+| 1 — Encodage | Cryptographie classique | Base64, César, ROT13, Hex |
+| 2 — Logique | Parsing & validation | Regex, JSON |
+| 3 — Infiltration | Analyse de données | EXIF, GPS, HTTP Headers, Redirections |
+| 4 — Breach | Challenges avancés | Regex+, Binaire, Double encodage, Final |
+
+### Contrôles
+
+| Touche | Action |
+|--------|--------|
+| A / D ou ← → | Déplacer le joueur |
+| E | Entrer dans une salle / Interagir |
+| Q | Retour au couloir |
+| Échap | Menu pause |
+
+### Fonctionnalités
+- Système d'indices avec malus de score
+- Leaderboard global
+- Progression sauvegardée en base de données
+- Dashboard administrateur (gestion des niveaux, indices, utilisateurs)
+- Avatar companion avec sons contextuels
+- Musique ambiante générative (Tone.js)
 
 ---
 
-## Base de données
-
-- PostgreSQL
-
----
-
-## DevOps
-
-- Docker
-- Docker Compose
-- GitHub Actions
-
----
-
-# Structure du projet
+## 📁 Structure du projet
 
 ```
 H4CKR/
-│
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   ├── auth/
-│   │   ├── database/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   └── main.py
-│   │
-│   ├── tests/
-│   ├── Dockerfile
-│   └── requirements.txt
-│
+│   │   ├── main.py               # FastAPI app + CORS
+│   │   ├── models/               # SQLAlchemy models (User, Level, Progress, Hint, Attempt)
+│   │   ├── routes/               # auth, levels, progress, admin
+│   │   ├── schemas.py            # Pydantic validation I/O
+│   │   ├── services/enigmes/     # Logique de vérification (encodage, regex, json, exif, http)
+│   │   ├── core/                 # Config + sécurité JWT
+│   │   └── db/                   # Session SQLAlchemy + init.sql
+│   ├── tests/                    # pytest unitaires + intégration + e2e
+│   ├── requirements.txt
+│   ├── .flake8
+│   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── store/
-│   │   ├── routes/
-│   │   └── styles/
-│   │
-│   ├── public/
-│   └── package.json
-│
+│   │   ├── pages/                # Login, Menu, Game, Leaderboard, Profile, Admin
+│   │   ├── game/                 # Phaser GameScene, TerminalModal, DialogueBox
+│   │   ├── components/           # MatrixRain, AvatarCompanion
+│   │   ├── hooks/                # useChiptune (Tone.js)
+│   │   ├── store/                # Zustand auth store
+│   │   └── api/                  # Axios client avec intercepteur JWT
+│   ├── nginx.conf
+│   ├── eslint.config.js
+│   └── Dockerfile
 ├── docker-compose.yml
+├── .github/workflows/ci.yml
 └── README.md
 ```
 
 ---
 
-# Sécurité
+## 🔐 API REST
 
-⚠️ Le frontend ne connaît jamais les solutions.
+### Authentification
+```http
+POST /api/auth/register   # Créer un compte
+POST /api/auth/login      # Connexion → JWT token
+```
 
-Le backend :
+### Niveaux
+```http
+GET  /api/levels                    # Liste des niveaux (sans solution_hash)
+GET  /api/levels/{id}               # Détail d'un niveau
+POST /api/levels/{id}/answer        # Soumettre une réponse
+POST /api/levels/{id}/hint          # Demander un indice
+```
 
-- hash les réponses avec SHA-256 + sel,
-- compare les hashes côté serveur,
-- empêche toute validation locale,
-- enregistre toutes les tentatives.
+### Progression
+```http
+GET /api/progress         # Progression de l'utilisateur
+GET /api/leaderboard      # Classement global
+```
 
-Le frontend :
-
-- affiche uniquement les artefacts,
-- envoie les réponses via API,
-- reçoit uniquement :
-    - success,
-    - fail.
+### Sécurité
+- Mots de passe hashés avec **bcrypt**
+- Solutions stockées en **SHA-256** — jamais exposées au frontend
+- Tous les endpoints protégés par **Bearer JWT**
+- CORS configuré pour autoriser uniquement les domaines autorisés
 
 ---
 
-# Installation
+## 🧪 Tests
 
-# 1. Cloner le projet
-
-```
-git clone https://github.com/USERNAME/H4CKR.git
-cd H4CKR
-```
-
----
-
-# 2. Backend
-
-```
+```bash
 cd backend
 
-python-m venv venv
+# Unitaires + couverture HTML
+python -m pytest tests/ --ignore=tests/test_e2e.py --cov=app/services/enigmes --cov-report=html
+
+# Tous les tests
+python -m pytest tests/ --ignore=tests/test_e2e.py -v
 ```
 
-## Windows
+| Suite | Nombre | Couverture |
+|-------|--------|-----------|
+| Unitaires (module enigmes) | 58 | 100% |
+| Intégration (endpoints API) | 21 | — |
+| E2E (Playwright) | 28 | — |
 
-```
-venv\Scripts\activate
+---
+
+## ⚙️ Variables d'environnement
+
+### Backend (`backend/.env`)
+```env
+DATABASE_URL=postgresql+psycopg2://user:password@host/db
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+FRONTEND_URL=http://localhost:5173
 ```
 
-## Installer dépendances
-
-```
-pip install-r requirements.txt
+### Frontend (`frontend/.env.local`)
+```env
+VITE_API_URL=http://localhost:8000/api
 ```
 
 ---
 
-# Lancer FastAPI
+## 🔄 CI/CD — GitHub Actions
 
-```
-uvicorn app.main:app--reload
+Le pipeline se déclenche à chaque push sur `main` :
+
+1. **Backend** — Flake8 lint + pytest (couverture ≥ 90%) + chargement init.sql
+2. **Frontend** — ESLint + vite build
+3. **Deploy** — Déploiement automatique sur Vercel
+
+---
+
+## 🐳 Docker
+
+```bash
+# Démarrer tous les services
+docker-compose up --build
+
+# Arrêter
+docker-compose down
+
+# Arrêter + supprimer les volumes
+docker-compose down -v
 ```
 
 ---
 
-# Swagger
+## 📋 Journal de développement
 
-```
-http://localhost:8000/docs
-```
-
----
-
-# 3. Frontend
-
-```
-cd frontend
-
-npm install
-npm run dev
-```
+| Jour | Travaux réalisés |
+|------|-----------------|
+| Jour 1 | Game Design Document, UML, Wireframes, Schéma BDD |
+| Jour 2 | Backend API, PostgreSQL, JWT, Docker backend |
+| Jour 3 | Moteur d'énigmes, validation serveur, tests pytest, Swagger |
+| Jour 4 | Frontend React + TypeScript, routing, ArtifactViewer, terminal Matrix, connexion API, thème cyberpunk |
+| Jour 5 | Moteur Phaser 4, GameScene 2D, couloir scrollable, salles par chapitre, avatar |
+| Jour 6 | Docker complet, CI/CD GitHub Actions, déploiement Vercel + Neon |
 
 ---
 
-# Frontend URL
-
-```
-http://localhost:5173
-```
-
----
-
-# 4. PostgreSQL Docker
-
-Depuis la racine :
-
-```
-docker-compose up-d
-```
-
----
-
-# Tests
-
-## Backend Tests
-
-```
-pytest
-```
-
-Objectif :
-
-- couverture ≥ 90% sur le moteur d’énigmes.
-
----
-
-# Interface utilisateur
-
-Le projet adopte une direction artistique :
-
-- cyberpunk,
-- terminal hacker,
-- ambiance néon,
-- exploration 2D.
-
-Inspirations :
-
-- HeXeR
-- Enter the Gungeon
-
----
-
-# Avancement du projet
-
-## Jour 1
-
-- Game Design Document
-- UML
-- Wireframes
-- Schéma BDD
-
-## Jour 2
-
-- Backend API
-- PostgreSQL
-- JWT
-- Docker backend
-
-## Jour 3
-
-- Moteur d’énigmes
-- Validation serveur
-- Tests backend
-- Swagger
-
-## Jour 4
-
-- Frontend React
-- Routing
-- API integration
-- ArtifactViewer
-- Interface cyberpunk
-
----
-
-# Répartition du travail
+## 👥 Équipe
 
 | Membre | Rôle |
-| --- | --- |
-| Malxhus | Frontend & UI |
-| Hamza | Backend & API |
-| Lamis | Documentation |
+|--------|------|
+| Malxhus | Frontend & UI, moteur Phaser, intégration API |
+| Hamza | Backend FastAPI, modèle de données, sécurité JWT |
+| Lamis | Documentation, tests, architecture |
+
+### Assistants IA utilisés
+- **ChatGPT** et **Claude** — aide à la structuration, résolution de problèmes techniques, optimisation de l'architecture
 
 ---
 
-# Contribution
+## 🔒 Contraintes respectées
 
-## Workflow Git
-
-```
-git checkout-b feature/nom-feature
-```
-
-Puis :
-
-```
-git add .
-git commit-m"feature added"
-git push
-```
+- ✅ Validation uniquement côté serveur
+- ✅ JWT + bcrypt
+- ✅ 5 tables (User, Level, Progress, Hint, Attempt)
+- ✅ Docker complet (3 services)
+- ✅ Tests backend ≥ 90% de couverture
+- ✅ 15 énigmes, 8 types différents
+- ✅ Architecture 3 couches (Frontend / API / BDD)
+- ✅ Frontend sans logique métier
 
 ---
 
-# Bonnes pratiques
+## 📄 Licence
 
-- respecter la structure du projet,
-- documenter les endpoints,
-- tester avant push,
-- ne jamais exposer les solutions frontend.
-
----
-
-# Contraintes respectées
-
-✅ Validation uniquement côté serveur
-
-✅ JWT + Refresh Tokens
-
-✅ 6 tables minimum
-
-✅ Docker complet
-
-✅ Tests backend ≥ 90%
-
-✅ 10-15 énigmes
-
-✅ 5 types d’énigmes différents
-
-✅ Architecture 3 couches
-
-✅ Frontend sans logique métier
-
----
-
-# Assistants IA utilisés
-
-Les outils d’intelligence artificielle suivants ont été utilisés comme assistants techniques et organisationnels :
-
-- ChatGPT
-- Claude
-
-Ils ont aidé à :
-
-- structurer l’architecture,
-- organiser le développement,
-- produire la documentation,
-- résoudre certains problèmes techniques,
-- optimiser les choix de conception.
-
----
-
-# Licence
-
-Projet éducatif — B2 Full-Stack Escape Game Cyberpunk.
+Projet éducatif — B2 Full-Stack Cyberpunk Escape Game.

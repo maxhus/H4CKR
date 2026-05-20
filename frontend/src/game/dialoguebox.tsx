@@ -81,4 +81,4 @@ export default function DialogueBox({ speaker, lines, onClose }: Props) {
       </div>
     </div>
   );
-}
+} 
