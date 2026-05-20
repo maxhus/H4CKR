@@ -101,6 +101,12 @@ jobs:
 
       - name: Deploy backend
         run: npx vercel --token=${{ secrets.VERCEL_TOKEN }} --prod --cwd backend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
 
       - name: Deploy frontend
         run: npx vercel --token=${{ secrets.VERCEL_TOKEN }} --prod --cwd frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
